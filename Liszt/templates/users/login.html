@@ -1,0 +1,35 @@
+{% load static %}
+<!doctype html>
+<html>
+  <head>
+    <title>Login</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/login.css' %}" />
+  </head>
+  <body>
+    <div class="card">
+      <h4>Iniciar sesión</h4>
+      {% if error %}
+      <div class="error">{{ error }}</div>
+      {% endif %}
+      <form method="POST">
+        {% csrf_token %}
+        <div class="campo">
+          <label>Correo</label>
+          <input type="email" name="correo" required />
+        </div>
+        <div class="campo">
+          <label>Contraseña</label>
+          <input type="password" name="contrasenia" required />
+        </div>
+        <button type="submit">Entrar</button>
+        <div id="Registrarse">
+          <a href="{% url 'Register' %}">Registrarse</a>
+        </div>
+        <div id="Registrarse">
+          <a href="{% url 'RegisterArtist' %}">Registrarse como artista</a>
+        </div>
+      </form>
+    </div>
+  </body>
+</html>

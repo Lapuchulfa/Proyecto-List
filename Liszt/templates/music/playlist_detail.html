@@ -1,0 +1,164 @@
+{% extends 'music/base_music.html' %}
+{% load static %}
+
+{% block title %}{{ playlist.nombre }} - Liszt{% endblock %}
+{% block page_title %}{{ playlist.nombre }}{% endblock %}
+
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+  <div style="display:flex; align-items:center; gap:16px;">
+    <div style="background:#1d2f3f; border-radius:10px; width:60px; height:60px;
+                display:flex; align-items:center; justify-content:center;">
+      <i class="ti ti-playlist" style="font-size:28px; color:#3387c7;"></i>
+    </div>
+    <div>
+      <h1 style="margin:0; font-size:1.6rem;">{{ playlist.nombre }}</h1>
+      <p style="color:#555; font-size:13px; margin:4px 0 0;">
+        {{ canciones|length }} canción{{ canciones|length|pluralize:",es" }}
+      </p>
+    </div>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <!-- Editar nombre -->
+    <button onclick="document.getElementById('modalEditar').style.display='flex'"
+            class="btn btn-secondary">✏ Renombrar</button>
+    <!-- Eliminar playlist -->
+    <form method="post" action="{% url 'playlist_eliminar' playlist_id=playlist.idPlaylist %}"
+          onsubmit="return confirm('¿Eliminar la playlist {{ playlist.nombre }}?')">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">🗑 Eliminar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Canciones de la playlist -->
+{% if canciones %}
+<table style="margin-bottom:32px;">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Título</th>
+      <th>Artista</th>
+      <th>Álbum</th>
+      <th>Duración</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in canciones %}
+    <tr style="cursor:pointer;"
+        onclick="reproducirCancion('{{ c.idCancion }}', '{{ c.nombre|escapejs }}', '{{ c.artista|escapejs }}')">
+      <td style="color:#555;">{{ forloop.counter }}</td>
+      <td><strong style="color:#fff;">{{ c.nombre }}</strong></td>
+      <td style="color:#aaa;">{{ c.artista }}</td>
+      <td style="color:#555;">{{ c.album }}</td>
+      <td>{{ c.duracion }}</td>
+      <td onclick="event.stopPropagation()">
+        <form method="post"
+              action="{% url 'playlist_quitar_cancion' playlist_id=playlist.idPlaylist cancion_id=c.idCancion %}">
+          {% csrf_token %}
+          <button type="submit"
+                  style="background:none; border:none; color:#e55; cursor:pointer; font-size:16px;"
+                  title="Quitar de playlist">✕</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty" style="margin-bottom:32px;">Esta playlist está vacía. Agrega canciones abajo.</div>
+{% endif %}
+
+<!-- Agregar canciones -->
+{% if canciones_disponibles %}
+<div class="card" style="max-width:700px;">
+  <h2 style="margin-top:0;">Agregar canciones</h2>
+  <input type="text" id="buscadorCanciones"
+         placeholder="Buscar canción o artista..."
+         oninput="filtrarCanciones(this.value)"
+         style="width:100%; background:#111; border:1px solid #333; border-radius:6px;
+                color:#fff; padding:8px 12px; font-size:13px; box-sizing:border-box; margin-bottom:16px;">
+  <div id="listaCanciones" style="max-height:320px; overflow-y:auto;">
+    {% for c in canciones_disponibles %}
+    <div class="cancion-row"
+         data-nombre="{{ c.nombre|lower }}"
+         data-artista="{{ c.artista|lower }}"
+         style="display:flex; align-items:center; justify-content:space-between;
+                padding:9px 4px; border-bottom:1px solid #1a1a1a;">
+      <div>
+        <span style="color:#fff; font-size:13px;">{{ c.nombre }}</span>
+        <span style="color:#555; font-size:12px; margin-left:8px;">{{ c.artista }}</span>
+        <span style="color:#333; font-size:11px; margin-left:6px;">{{ c.album }}</span>
+      </div>
+      <form method="post"
+            action="{% url 'playlist_agregar_cancion' playlist_id=playlist.idPlaylist %}">
+        {% csrf_token %}
+        <input type="hidden" name="cancion_id" value="{{ c.idCancion }}">
+        <button type="submit"
+                style="background:#1d2f3f; border:1px solid #3387c7; color:#3387c7;
+                       padding:4px 12px; border-radius:4px; cursor:pointer; font-size:12px;">
+          + Agregar
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Modal renombrar -->
+<div id="modalEditar"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7);
+            z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#1a1a1a; border:1px solid #333; border-radius:12px;
+              padding:28px; width:340px;">
+    <h3 style="margin:0 0 20px; color:#fff; font-size:16px;">Renombrar playlist</h3>
+    <form method="post" action="{% url 'playlist_editar' playlist_id=playlist.idPlaylist %}">
+      {% csrf_token %}
+      <input type="text" name="nombre" value="{{ playlist.nombre }}" maxlength="30" required
+             style="width:100%; background:#111; border:1px solid #333; border-radius:6px;
+                    color:#fff; padding:8px 12px; font-size:14px; box-sizing:border-box; margin-bottom:16px;">
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button type="button"
+                onclick="document.getElementById('modalEditar').style.display='none'"
+                style="background:#2a2a2a; border:none; color:#aaa; padding:8px 16px;
+                       border-radius:6px; cursor:pointer;">Cancelar</button>
+        <button type="submit"
+                style="background:#3387c7; border:none; color:#fff; padding:8px 16px;
+                       border-radius:6px; cursor:pointer; font-weight:600;">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function reproducirCancion(id, titulo, artista) {
+  const url = `/music/canciones/${id}/stream/`;
+  document.getElementById('npTitle').textContent = titulo;
+  document.getElementById('npArtist').textContent = artista;
+  const audio = document.getElementById('audioPlayer');
+  audio.src = url;
+  audio.play();
+  document.getElementById('playIcon').className = 'ti ti-player-pause';
+  localStorage.setItem('lz_song_url', url);
+  localStorage.setItem('lz_song_title', titulo);
+  localStorage.setItem('lz_song_artist', artista);
+}
+
+function filtrarCanciones(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.cancion-row').forEach(row => {
+    const coincide = row.dataset.nombre.includes(q) || row.dataset.artista.includes(q);
+    row.style.display = coincide ? 'flex' : 'none';
+  });
+}
+
+document.getElementById('modalEditar').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+</script>
+{% endblock %}

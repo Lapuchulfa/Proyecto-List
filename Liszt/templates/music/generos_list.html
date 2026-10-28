@@ -1,0 +1,42 @@
+{% extends 'music/base_music.html' %}
+{% load static %}
+
+{% block title %}Géneros - Liszt{% endblock %}
+{% block nav_generos %}active{% endblock %}
+{% block page_title %}Géneros musicales{% endblock %}
+
+{% block content %}
+<div class="filter-bar">
+  <input id="filtro-generos" type="text" placeholder="Filtrar géneros...">
+  <span id="filter-count">{{ generos|length }} géneros</span>
+</div>
+
+<table id="tabla-generos">
+  <thead>
+    <tr>
+      <th data-sort>Género</th>
+      <th data-sort>Lanzamientos</th>
+      <th data-sort>Canciones</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for g in generos %}
+    <tr>
+      <td><strong style="color:#fff">{{ g.nombre }}</strong></td>
+      <td>{{ g.num_lanzamientos }}</td>
+      <td>{{ g.num_canciones }}</td>
+      <td><a class="btn btn-primary" href="{% url 'genero_detail' genero_id=g.idGenero %}">Ver canciones</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'JS/music.js' %}"></script>
+<script>
+  initLiveFilter('filtro-generos', 'tabla-generos');
+  initSortableTable('tabla-generos');
+</script>
+{% endblock %}

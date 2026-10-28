@@ -1,0 +1,115 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="{% static 'css/Register.css' %}" />
+
+    <title>Register</title>
+  </head>
+  <body>
+    <form class="card" method="post">
+      {% csrf_token %}
+      <h4>Registrarse</h4>
+      {% if error %}
+      <div class="error">{{ error }}</div>
+      {% endif %}
+      <div class="contenedor">
+        <div class="campo">
+          <label>Nombre: </label>
+          <input
+            type="text"
+            name="Nombre"
+            value="{{ Nombre|default:'' }}"
+            required
+          />
+        </div>
+        <div class="campo">
+          <label>Apellido:</label>
+          <input
+            type="text"
+            name="Apellido"
+            value="{{ Apellido|default:'' }}"
+            required
+          />
+        </div>
+      </div>
+      <div class="campo">
+        <label>Correo</label>
+        <input
+          type="email"
+          name="correo"
+          value="{{ correo|default:'' }}"
+          required
+        />
+      </div>
+      <div class="campo">
+        <label>Contraseña</label>
+        <input type="password" name="contrasenia" required />
+      </div>
+      <div class="campo">
+        <label>Repita la contraseña</label>
+        <input type="password" name="confirmar_contrasenia" required />
+      </div>
+      <div class="contenedor">
+        <div class="campo">
+          <label>Fecha de nacimiento: </label>
+          <input
+            type="date"
+            name="fechadenacimiento"
+            value="{{ fechadenacimiento|default:'' }}"
+            required
+          />
+        </div>
+        <div class="campo">
+          <label>Genero:</label>
+          <select id="Genero" name="Genero">
+            <option value="M">Masculino</option>
+            <option value="F">Femenino</option>
+          </select>
+        </div>
+      </div>
+      <div class="campo">
+        <input
+          name="PaisDeOrigen"
+          list="paises"
+          placeholder="Escribe un país..."
+        />
+        <datalist id="paises">
+          <option value="Argentina"></option>
+          <option value="Bolivia"></option>
+          <option value="Brasil"></option>
+          <option value="Chile"></option>
+          <option value="Colombia"></option>
+          <option value="Costa Rica"></option>
+          <option value="Cuba"></option>
+          <option value="Ecuador"></option>
+          <option value="El Salvador"></option>
+          <option value="Guatemala"></option>
+          <option value="Haití"></option>
+          <option value="Honduras"></option>
+          <option value="Jamaica"></option>
+          <option value="México"></option>
+          <option value="Nicaragua"></option>
+          <option value="Panamá"></option>
+          <option value="Paraguay"></option>
+          <option value="Perú"></option>
+          <option value="República Dominicana"></option>
+          <option value="Trinidad y Tobago"></option>
+          <option value="Uruguay"></option>
+          <option value="Venezuela"></option>
+          <option value="Canadá"></option>
+          <option value="Estados Unidos"></option>
+          <option value="Belice"></option>
+          <option value="Barbados"></option>
+          <option value="Bahamas"></option>
+          <option value="Guyana"></option>
+          <option value="Surinam"></option>
+        </datalist>
+      </div>
+      <button type="submit">Registrarse</button>
+    </form>
+    <script src="{% static 'js/Register.js' %}"></script>
+  </body>
+</html>

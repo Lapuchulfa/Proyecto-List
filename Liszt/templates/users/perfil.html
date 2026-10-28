@@ -1,0 +1,150 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi perfil</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+  <link rel="stylesheet" href="{% static 'css/perfil.css' %}">
+</head>
+<body>
+
+<div class="perfil-page">
+  <div class="perfil-card">
+
+    <div class="perfil-header">
+      <div class="avatar">
+        {{ usuario.nombre|slice:":1"|upper }}{{ usuario.apellido|slice:":1"|upper }}
+      </div>
+      <div class="header-info">
+        <h2>{{ usuario.nombre }} {{ usuario.apellido }}</h2>
+        <span>{{ usuario.correo }}</span><br>
+        <span class="badge-registro">
+          <i class="ti ti-calendar" aria-hidden="true"></i>
+          Miembro desde {{ usuario.fecha_registro|date:"d M Y" }}
+        </span>
+      </div>
+    </div>
+
+    <form method="POST" action="{% url 'perfil_update' %}">
+      {% csrf_token %}
+
+      <div class="perfil-grid">
+        {% if error %}
+        <p class="perfil-error full">{{ error }}</p>
+        {% endif %}
+
+        <p class="section-title">Información personal</p>
+
+        <div class="campo-wrap">
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" name="nombre" value="{{ usuario.nombre }}">
+        </div>
+
+        <div class="campo-wrap">
+          <label for="apellido">Apellido</label>
+          <input type="text" id="apellido" name="apellido" value="{{ usuario.apellido }}">
+        </div>
+
+        <div class="campo-wrap full">
+          <label for="correo">Correo electrónico</label>
+          <input type="email" id="correo" name="correo" value="{{ usuario.correo }}">
+        </div>
+
+        <div class="campo-wrap">
+          <label for="genero">Género</label>
+          <select id="genero" name="genero">
+            <option value="M" {% if usuario.genero == 'M' %}selected{% endif %}>Masculino</option>
+            <option value="F" {% if usuario.genero == 'F' %}selected{% endif %}>Femenino</option>
+            <option value="O" {% if usuario.genero == 'O' %}selected{% endif %}>Otro</option>
+            <option value="N" {% if usuario.genero == 'N' %}selected{% endif %}>Prefiero no decir</option>
+          </select>
+        </div>
+
+        <div class="campo-wrap">
+          <label for="edad">Edad</label>
+          <input type="number" id="edad" name="edad" value="{{ usuario.edad }}" min="1" max="120">
+        </div>
+
+        <div class="campo-wrap">
+          <label for="paisDeOrigen">País de origen</label>
+          <input type="text" id="paisDeOrigen" name="paisDeOrigen" value="{{ usuario.paisDeOrigen }}">
+        </div>
+
+        <div class="campo-wrap">
+          <label for="fechaDeNacimiento">Fecha de nacimiento</label>
+          <input type="date" id="fechaDeNacimiento" name="fechaDeNacimiento"
+                 value="{{ usuario.fechaDeNacimiento|date:'Y-m-d' }}">
+        </div>
+
+        <p class="section-title">Seguridad</p>
+
+        <div class="campo-wrap">
+          <label for="contrasenia_actual">Contraseña actual</label>
+          <input type="password" id="contrasenia_actual" name="contrasenia_actual" placeholder="••••••••">
+        </div>
+
+        <div class="campo-wrap">
+          <label for="contrasenia_nueva">Nueva contraseña</label>
+          <input type="password" id="contrasenia_nueva" name="contrasenia_nueva" placeholder="••••••••">
+        </div>
+
+        <div class="btn-row full">
+          <a href="{% url 'home' %}" class="btn btn-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </div>
+
+        <div class="danger-zone">
+          <p>
+            <strong>Eliminar cuenta</strong>
+            Esta acción es permanente y borra todos tus datos, canciones y playlists.
+          </p>
+          <button type="button" class="btn btn-danger"
+                  onclick="document.getElementById('modalEliminarCuenta').style.display='flex'">
+            Eliminar cuenta
+          </button>
+        </div>
+
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<!-- Modal eliminar cuenta -->
+<div id="modalEliminarCuenta"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7);
+            z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#1a1a1a; border:1px solid #333; border-radius:12px;
+              padding:28px; width:360px;">
+    <h3 style="margin:0 0 12px; color:#fff; font-size:16px;">Eliminar cuenta</h3>
+    <p style="color:#aaa; font-size:13px; margin-bottom:20px;">
+      Esta acción no se puede deshacer. Se van a borrar tu perfil, tus playlists
+      y, si sos artista, tus lanzamientos y canciones. Ingresá tu contraseña para confirmar.
+    </p>
+    <form method="POST" action="{% url 'perfil_eliminar' %}">
+      {% csrf_token %}
+      <input type="password" name="contrasenia_actual_eliminar" placeholder="Contraseña actual" required
+             style="width:100%; background:#111; border:1px solid #333; border-radius:6px;
+                    color:#fff; padding:8px 12px; font-size:14px; box-sizing:border-box; margin-bottom:16px;">
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button type="button"
+                onclick="document.getElementById('modalEliminarCuenta').style.display='none'"
+                style="background:#2a2a2a; border:none; color:#aaa; padding:8px 16px;
+                       border-radius:6px; cursor:pointer;">Cancelar</button>
+        <button type="submit" class="btn btn-danger"
+                style="padding:8px 16px;">Eliminar definitivamente</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.getElementById('modalEliminarCuenta').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+</script>
+
+</body>
+</html>

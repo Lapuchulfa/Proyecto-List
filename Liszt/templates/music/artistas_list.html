@@ -1,0 +1,50 @@
+{% extends 'music/base_music.html' %}
+{% load static %}
+
+{% block title %}Artistas - Liszt{% endblock %}
+{% block nav_artistas %}active{% endblock %}
+{% block page_title %}Artistas{% endblock %}
+
+{% block content %}
+{% if artistas %}
+  <div class="filter-bar">
+    <input id="filtro-artistas" type="text" placeholder="Filtrar por nombre, país, discográfica...">
+    <span id="filter-count">{{ artistas|length }} resultado(s)</span>
+  </div>
+
+  <table id="tabla-artistas">
+    <thead>
+      <tr>
+        <th data-sort>Artista</th>
+        <th data-sort>País</th>
+        <th data-sort>Discográfica</th>
+        <th>Géneros</th>
+        <th>Biografía</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in artistas %}
+      <tr>
+        <td><strong style="color:#fff">{{ a.nombre }} {{ a.apellido }}</strong></td>
+        <td>{{ a.pais }}</td>
+        <td>{{ a.discografica }}</td>
+        <td>{{ a.generos }}</td>
+        <td>{{ a.biografia|truncatechars:70 }}</td>
+        <td><a class="btn btn-primary" href="{% url 'artista_detail' artista_id=a.idArtista %}">Ver perfil</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="empty">No hay artistas registrados.</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'JS/music.js' %}"></script>
+<script>
+  initLiveFilter('filtro-artistas', 'tabla-artistas');
+  initSortableTable('tabla-artistas');
+</script>
+{% endblock %}

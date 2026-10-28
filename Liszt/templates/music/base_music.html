@@ -1,0 +1,355 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Liszt{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <link rel="stylesheet" href="{% static 'css/music_player.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/music.css' %}" />
+  <style>
+    body { height: 100vh; overflow: hidden; }
+
+    /* ── sidebar nav ── */
+    .sidebar-nav { padding: 12px 0 4px; border-bottom: 1px solid #222; }
+
+    .sidebar-logo {
+      display: block;
+      padding: 4px 16px 12px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #3387c7;
+      text-decoration: none;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      margin: 1px 6px;
+      border-radius: 6px;
+      color: #888;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .nav-item i { font-size: 17px; flex-shrink: 0; }
+    .nav-item:hover { background: #1a1a1a; color: #ddd; }
+    .nav-item.active { color: #fff; background: #1d2f3f; }
+    .nav-item.active i { color: #3387c7; }
+
+    /* ── main content overrides ── */
+    .main .container { max-width: none; margin: 0; padding: 0; }
+    .content { padding: 24px; }
+    .content h1 { font-size: 1.6rem; margin-bottom: 1rem; }
+    .content h2 { font-size: 1.2rem; margin-top: 1.5rem; margin-bottom: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar">
+      <div class="sidebar-nav">
+        <a class="sidebar-logo" href="{% url 'home' %}">Liszt</a>
+        <a class="nav-item {% block nav_inicio %}{% endblock %}" href="{% url 'home' %}">
+          <i class="ti ti-home-2"></i> Inicio
+        </a>
+        <a class="nav-item {% block nav_buscar %}{% endblock %}" href="{% url 'canciones' %}">
+          <i class="ti ti-search"></i> Buscar
+        </a>
+        <a class="nav-item {% block nav_artistas %}{% endblock %}" href="{% url 'artistas' %}">
+          <i class="ti ti-microphone-2"></i> Artistas
+        </a>
+        <a class="nav-item {% block nav_generos %}{% endblock %}" href="{% url 'generos' %}">
+          <i class="ti ti-music"></i> Géneros
+        </a>
+        <a class="nav-item {% block nav_discograficas %}{% endblock %}" href="{% url 'discograficas' %}">
+          <i class="ti ti-building-community"></i> Discográficas
+        </a>
+      </div>
+      <div class="sidebar-header" style="display:flex; align-items:center; justify-content:space-between; padding-right:12px;">
+        <span>Tu biblioteca</span>
+        <button onclick="abrirModalPlaylist()"
+                style="background:none; border:none; color:#3387c7; cursor:pointer;
+                       font-size:20px; line-height:1; padding:0;"
+                title="Nueva playlist">+</button>
+      </div>
+
+      <!-- Playlists -->
+      <div style="padding: 4px 0; border-bottom: 1px solid #1a1a1a;">
+        {% for pl in sidebar_playlists %}
+        <a href="{% url 'playlist_detail' playlist_id=pl.id %}"
+           style="display:flex; align-items:center; gap:8px; padding:7px 14px;
+                  color:#aaa; text-decoration:none; font-size:13px; border-radius:6px; margin:1px 6px;"
+           onmouseover="this.style.background='#1a1a1a'; this.style.color='#ddd'"
+           onmouseout="this.style.background=''; this.style.color='#aaa'">
+          <i class="ti ti-playlist" style="font-size:15px; color:#555;"></i>
+          {{ pl.nombre }}
+        </a>
+        {% empty %}
+        <p style="color:#444; padding:8px 16px; font-size:12px;">Sin playlists aún</p>
+        {% endfor %}
+      </div>
+
+      <div class="song-list" id="songList">
+        {% for cancion in sidebar_canciones %}
+        <div
+          class="song-item"
+          id="song-{{ forloop.counter0 }}"
+          data-index="{{ forloop.counter0 }}"
+          data-title="{{ cancion.titulo }}"
+          data-artist="{{ cancion.artista }}"
+          data-url="{% url 'stream_cancion' cancion.id %}"
+          data-dur="{{ cancion.duracion }}"
+          onclick="selectSong(this.dataset.index)"
+        >
+          <span class="song-num">{{ forloop.counter }}</span>
+          <div class="song-info">
+            <div class="song-title">{{ cancion.titulo }}</div>
+            <div class="song-artist">{{ cancion.artista }}</div>
+          </div>
+          <span class="song-dur">{{ cancion.duracion }}</span>
+        </div>
+        {% empty %}
+        <p style="color:#555; padding:16px; font-size:13px">No hay canciones aún.</p>
+        {% endfor %}
+      </div>
+
+      <!-- Modal crear playlist -->
+      <div id="modalPlaylist"
+           style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7);
+                  z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:#1a1a1a; border:1px solid #333; border-radius:12px;
+                    padding:28px; width:340px; box-shadow:0 8px 32px #000;">
+          <h3 style="margin:0 0 20px; color:#fff; font-size:16px;">Nueva playlist</h3>
+          <form method="post" action="{% url 'playlist_crear' %}">
+            {% csrf_token %}
+            <div style="margin-bottom:16px;">
+              <label style="color:#aaa; font-size:13px; display:block; margin-bottom:6px;">
+                Nombre
+              </label>
+              <input type="text" name="nombre" maxlength="30" required
+                     placeholder="Mi playlist..."
+                     style="width:100%; background:#111; border:1px solid #333; border-radius:6px;
+                            color:#fff; padding:8px 12px; font-size:14px; box-sizing:border-box;">
+            </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+              <button type="button" onclick="cerrarModalPlaylist()"
+                      style="background:#2a2a2a; border:none; color:#aaa; padding:8px 16px;
+                             border-radius:6px; cursor:pointer; font-size:13px;">
+                Cancelar
+              </button>
+              <button type="submit"
+                      style="background:#3387c7; border:none; color:#fff; padding:8px 16px;
+                             border-radius:6px; cursor:pointer; font-size:13px; font-weight:600;">
+                Crear
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Área principal ── -->
+    <main class="main">
+      <div class="topbar">
+        <span class="topbar-title">{% block page_title %}{% endblock %}</span>
+        <div class="user-bubble">
+          <button class="user-btn" id="userBtn" aria-label="Cuenta de usuario">
+            {{ nombre_usuario|slice:":2"|upper }}
+          </button>
+          <div class="user-menu" id="userMenu">
+            <a href="{% url 'perfil' %}" class="user-menu-item">
+              <i class="ti ti-user" aria-hidden="true"></i> Mi perfil
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="content">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+    
+    <!-- ── Barra de reproducción ── -->
+    <div class="playerbar">
+      <div class="now-playing">
+        <div class="np-thumb" id="npThumb">
+          <i class="ti ti-music" aria-hidden="true" style="font-size:18px; color:#fff"></i>
+        </div>
+        <div class="np-info">
+          <div class="np-title" id="npTitle">Selecciona una canción</div>
+          <div class="np-artist" id="npArtist">—</div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="ctrl-btns">
+          <button class="ctrl-btn" onclick="prevSong()" aria-label="Anterior">
+            <i class="ti ti-player-skip-back"></i>
+          </button>
+          <button class="ctrl-btn" onclick="seek(-10)" aria-label="Retroceder 10s">
+            <i class="ti ti-player-track-prev"></i>
+          </button>
+          <button class="ctrl-btn primary" id="playBtn" onclick="togglePlay()" aria-label="Play/Pausa">
+            <i class="ti ti-player-play" id="playIcon"></i>
+          </button>
+          <button class="ctrl-btn" onclick="seek(10)" aria-label="Adelantar 10s">
+            <i class="ti ti-player-track-next"></i>
+          </button>
+          <button class="ctrl-btn" onclick="nextSong()" aria-label="Siguiente">
+            <i class="ti ti-player-skip-forward"></i>
+          </button>
+        </div>
+        <div class="progress-row">
+          <span class="time" id="timeElapsed">0:00</span>
+          <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <span class="time right" id="timeDur">0:00</span>
+        </div>
+      </div>
+      <div class="vol-area">
+        <i class="ti ti-volume" aria-hidden="true"></i>
+        <div class="vol-bar" id="volBar">
+          <div class="vol-fill" id="volFill"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="audioPlayer"></audio>
+
+  <script>
+    const audio = document.getElementById('audioPlayer');
+    let currentIndex = null;
+
+    function getSongData(i) {
+      const el = document.getElementById('song-' + i);
+      if (!el) return null;
+      return { title: el.dataset.title, artist: el.dataset.artist, url: el.dataset.url, dur: el.dataset.dur };
+    }
+
+    function selectSong(i) {
+      if (currentIndex !== null) {
+        const prev = document.getElementById('song-' + currentIndex);
+        if (prev) prev.classList.remove('active');
+      }
+      currentIndex = i;
+      const el = document.getElementById('song-' + i);
+      if (el) el.classList.add('active');
+      const s = getSongData(i);
+      if (!s) return;
+      document.getElementById('npTitle').textContent = s.title;
+      document.getElementById('npArtist').textContent = s.artist;
+      audio.src = s.url;
+      audio.play();
+      document.getElementById('playIcon').className = 'ti ti-player-pause';
+      localStorage.setItem('lz_song_idx', i);
+      localStorage.setItem('lz_song_title', s.title);
+      localStorage.setItem('lz_song_artist', s.artist);
+      localStorage.setItem('lz_song_url', s.url);
+    }
+
+    function togglePlay() {
+      if (currentIndex === null) { selectSong(0); return; }
+      if (audio.paused) {
+        audio.play();
+        document.getElementById('playIcon').className = 'ti ti-player-pause';
+      } else {
+        audio.pause();
+        document.getElementById('playIcon').className = 'ti ti-player-play';
+      }
+    }
+
+    function seek(s) {
+      if (!audio.src) return;
+      audio.currentTime = Math.max(0, Math.min(audio.currentTime + s, audio.duration || 0));
+    }
+
+    function prevSong() {
+      if (currentIndex === null || currentIndex === 0) return;
+      selectSong(currentIndex - 1);
+    }
+
+    function nextSong() {
+      if (currentIndex === null) return;
+      const total = document.querySelectorAll('.song-item').length;
+      if (currentIndex < total - 1) selectSong(currentIndex + 1);
+    }
+
+    function secToStr(s) {
+      s = Math.floor(s);
+      return Math.floor(s / 60) + ':' + (s % 60 < 10 ? '0' : '') + (s % 60);
+    }
+
+    audio.addEventListener('timeupdate', () => {
+      if (!audio.duration) return;
+      const pct = ((audio.currentTime / audio.duration) * 100).toFixed(1);
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('timeElapsed').textContent = secToStr(audio.currentTime);
+      document.getElementById('timeDur').textContent = secToStr(audio.duration);
+    });
+
+    audio.addEventListener('ended', () => {
+      document.getElementById('playIcon').className = 'ti ti-player-play';
+      nextSong();
+    });
+
+    document.getElementById('progressBar').addEventListener('click', e => {
+      if (!audio.duration) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
+    });
+
+    document.getElementById('volBar').addEventListener('click', e => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const vol = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      audio.volume = vol;
+      document.getElementById('volFill').style.width = (vol * 100).toFixed(0) + '%';
+    });
+
+    document.getElementById('userBtn').addEventListener('click', e => {
+      e.stopPropagation();
+      document.getElementById('userMenu').classList.toggle('open');
+    });
+
+    document.addEventListener('click', () => {
+      document.getElementById('userMenu').classList.remove('open');
+    });
+
+    // Restaurar canción previa al navegar entre páginas
+    (function restorePlayer() {
+      const savedUrl = localStorage.getItem('lz_song_url');
+      const savedTitle = localStorage.getItem('lz_song_title');
+      const savedArtist = localStorage.getItem('lz_song_artist');
+      if (!savedUrl) return;
+      document.getElementById('npTitle').textContent = savedTitle || '';
+      document.getElementById('npArtist').textContent = savedArtist || '';
+      audio.src = savedUrl;
+      const savedIdx = parseInt(localStorage.getItem('lz_song_idx'), 10);
+      if (!isNaN(savedIdx)) {
+        currentIndex = savedIdx;
+        const el = document.getElementById('song-' + savedIdx);
+        if (el) el.classList.add('active');
+      }
+    })();
+    function abrirModalPlaylist() {
+      const m = document.getElementById('modalPlaylist');
+      m.style.display = 'flex';
+    }
+    function cerrarModalPlaylist() {
+      document.getElementById('modalPlaylist').style.display = 'none';
+    }
+    document.getElementById('modalPlaylist').addEventListener('click', function(e) {
+      if (e.target === this) cerrarModalPlaylist();
+    });
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,22 @@
+{% extends 'music/base_music.html' %}
+
+{% block title %}Discográficas - Liszt{% endblock %}
+{% block nav_discograficas %}active{% endblock %}
+{% block page_title %}Discográficas{% endblock %}
+
+{% block content %}
+{% for d in discograficas %}
+<div class="disc-card">
+  <h2>{{ d.nombre }} <span class="stat">({{ d.num_artistas }} artista(s))</span></h2>
+  {% if d.artistas %}
+    <ul>
+      {% for a in d.artistas %}
+        <li><a href="{% url 'artista_detail' artista_id=a.idArtista %}">{{ a.nombre }} {{ a.apellido }}</a></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p style="color:#555">Sin artistas registrados.</p>
+  {% endif %}
+</div>
+{% endfor %}
+{% endblock %}

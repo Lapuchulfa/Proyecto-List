@@ -1,0 +1,83 @@
+{% extends 'music/base_music.html' %}
+{% load static %}
+
+{% block title %}{{ artista.nombre }} {{ artista.apellido }} - Liszt{% endblock %}
+{% block nav_artistas %}active{% endblock %}
+{% block page_title %}{{ artista.nombre }} {{ artista.apellido }}{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'artistas' %}">← Volver a artistas</a>
+
+<div class="card">
+  <div class="artist-header">
+    <div class="artist-info">
+      <h1>{{ artista.nombre }} {{ artista.apellido }}</h1>
+      <p><strong>Discográfica:</strong> {{ artista.discografica }}</p>
+      <p><strong>País:</strong> {{ artista.pais }}</p>
+      <p><strong>Correo:</strong> {{ artista.correo }}</p>
+      <p><strong>Géneros:</strong></p>
+      <div class="genre-tags">
+        {% for g in generos %}
+          <a class="genre-tag" href="{% url 'genero_detail' genero_id=g.id %}">{{ g.nombre }}</a>
+        {% empty %}
+          <span style="color:#555">Sin géneros asignados</span>
+        {% endfor %}
+      </div>
+      <p style="margin-top:1rem"><strong>Biografía:</strong> {{ artista.biografia }}</p>
+    </div>
+    {% if es_propio %}
+    <div style="display:flex; flex-direction:column; gap:0.6rem;">
+      <a class="btn btn-secondary" href="{% url 'artista_editar' artista_id=artista.idArtista %}">✏ Editar perfil</a>
+      <a class="btn btn-primary" href="{% url 'lanzamiento_crear' %}">+ Nuevo lanzamiento</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<h2>Lanzamientos</h2>
+
+{% if lanzamientos %}
+  <table id="tabla-lanzamientos">
+    <thead>
+      <tr>
+        <th data-sort>Título</th>
+        <th data-sort>Tipo</th>
+        <th data-sort>Fecha</th>
+        <th data-sort>Canciones</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in lanzamientos %}
+      <tr>
+        <td><strong style="color:#fff">{{ l.nombre }}</strong></td>
+        <td><span class="badge badge-gray">{{ l.tipo }}</span></td>
+        <td>{{ l.fecha }}</td>
+        <td>{{ l.num_canciones }}</td>
+        <td style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <a class="btn btn-primary" href="{% url 'lanzamiento_detail' lanzamiento_id=l.idLanzamiento %}">Ver</a>
+          {% if es_propio %}
+            <a class="btn btn-secondary" href="{% url 'lanzamiento_editar' lanzamiento_id=l.idLanzamiento %}">Editar</a>
+            <form method="post" action="{% url 'lanzamiento_eliminar' lanzamiento_id=l.idLanzamiento %}"
+                  data-confirm="¿Eliminar '{{ l.nombre }}' y todas sus canciones?">
+              {% csrf_token %}
+              <button class="btn btn-danger" type="submit">Eliminar</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="empty">Este artista no tiene lanzamientos aún.</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'JS/music.js' %}"></script>
+<script>
+  initSortableTable('tabla-lanzamientos');
+  initDeleteModal();
+</script>
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends 'music/base_music.html' %}
+{% load static %}
+
+{% block title %}Subir música - Liszt{% endblock %}
+{% block nav_artistas %}active{% endblock %}
+{% block page_title %}Subir música{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'home' %}">← Volver al inicio</a>
+
+<!-- ── PASO 1: datos del lanzamiento ── -->
+<div class="card" style="max-width:600px; margin-bottom:24px;" id="paso1">
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+    <div style="background:#3387c7; color:#fff; border-radius:50%; width:28px; height:28px;
+                display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">1</div>
+    <h2 style="margin:0;">Datos del lanzamiento</h2>
+    {% if lanzamiento_creado %}
+      <span style="color:#4caf50; font-size:13px; margin-left:auto;">✔ Creado</span>
+    {% endif %}
+  </div>
+
+  {% if lanzamiento_creado %}
+    <!-- Resumen readonly una vez creado -->
+    <div style="color:#aaa; font-size:14px; line-height:2;">
+      <p><strong style="color:#fff">Título:</strong> {{ lanzamiento_creado.nombre }}</p>
+      <p><strong style="color:#fff">Tipo:</strong> {{ lanzamiento_creado.tipo }}</p>
+      <p><strong style="color:#fff">Fecha:</strong> {{ lanzamiento_creado.fecha }}</p>
+    </div>
+  {% else %}
+    {% if error %}
+      <div class="error-msg" style="margin-bottom:16px;">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="{% url 'lanzamiento_crear' %}">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="crear_lanzamiento">
+      <div class="form-group">
+        <label for="nombre">Título</label>
+        <input type="text" id="nombre" name="nombre" maxlength="60"
+               placeholder="Nombre del álbum, EP o single" required>
+      </div>
+      <div class="form-group">
+        <label for="tipo">Tipo</label>
+        <select id="tipo" name="tipo" required>
+          <option value="">-- Seleccionar --</option>
+          <option value="Album">Álbum</option>
+          <option value="Ep">EP</option>
+          <option value="Single">Single</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="fecha">Fecha de publicación</label>
+        <input type="date" id="fecha" name="fecha" required>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Continuar →</button>
+        <a class="btn btn-secondary" href="{% url 'home' %}">Cancelar</a>
+      </div>
+    </form>
+  {% endif %}
+</div>
+
+<!-- ── PASO 2: agregar canciones ── -->
+{% if lanzamiento_creado %}
+<div class="card" style="max-width:600px;" id="paso2">
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+    <div style="background:#3387c7; color:#fff; border-radius:50%; width:28px; height:28px;
+                display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">2</div>
+    <h2 style="margin:0;">Agregar canciones</h2>
+  </div>
+
+  <!-- Lista de canciones ya subidas -->
+  <div id="canciones-subidas">
+    {% for c in canciones_subidas %}
+    <div style="display:flex; align-items:center; justify-content:space-between;
+                padding:10px 0; border-bottom:1px solid #222;">
+      <div>
+        <span style="color:#3387c7; font-weight:700; margin-right:10px;">#{{ c.pista }}</span>
+        <span style="color:#fff;">{{ c.nombre }}</span>
+        <span style="color:#555; font-size:12px; margin-left:10px;">{{ c.duracion }}</span>
+      </div>
+      <form method="post"
+            action="{% url 'cancion_eliminar' cancion_id=c.idCancion %}"
+            onsubmit="return confirm('¿Eliminar esta canción?')">
+        {% csrf_token %}
+        <button type="submit"
+                style="background:none; border:none; color:#e55; cursor:pointer; font-size:16px;">🗑</button>
+      </form>
+    </div>
+    {% empty %}
+    <p style="color:#555; font-size:13px; margin-bottom:16px;">
+      Aún no hay canciones. Agrega la primera abajo.
+    </p>
+    {% endfor %}
+  </div>
+
+  <!-- Form subir canción -->
+    <form method="post"
+      action="{% url 'lanzamiento_crear' %}"
+      enctype="multipart/form-data"
+      style="margin-top:20px;">
+    {% csrf_token %}
+    <input type="hidden" name="accion" value="subir_cancion">
+    <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+      <div class="form-group" style="flex:1; min-width:180px; margin:0;">
+        <label for="nombre_cancion">Nombre de la canción</label>
+        <input type="text" id="nombre_cancion" name="nombre" maxlength="50"
+               placeholder="Ej: Bohemian Rhapsody" required>
+      </div>
+      <div class="form-group" style="flex:1; min-width:180px; margin:0;">
+        <label for="audio">Archivo de audio</label>
+        <input type="file" id="audio" name="audio"
+               accept=".mp3,.wav,.ogg,.flac,.m4a" required
+               style="padding:6px 0; color:#ccc;">
+      </div>
+      <button class="btn btn-primary" type="submit" style="margin-bottom:0;">
+        + Subir
+      </button>
+    </div>
+    <small style="color:#555; font-size:12px; display:block; margin-top:6px;">
+      MP3, WAV, OGG, FLAC o M4A
+    </small>
+    {% if error_cancion %}
+      <div class="error-msg" style="margin-top:10px;">{{ error_cancion }}</div>
+    {% endif %}
+  </form>
+
+  <!-- Botón finalizar -->
+  <div style="margin-top:28px; padding-top:20px; border-top:1px solid #222;">
+    <a class="btn btn-primary"
+       href="{% url 'lanzamiento_detail' lanzamiento_id=lanzamiento_creado.idLanzamiento %}">
+      Ver lanzamiento completo →
+    </a>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'JS/music.js' %}"></script>
+{% endblock %}

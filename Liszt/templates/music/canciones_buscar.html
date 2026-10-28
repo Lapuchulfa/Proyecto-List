@@ -1,0 +1,61 @@
+{% extends 'music/base_music.html' %}
+{% load static %}
+
+{% block title %}Buscar canciones - Liszt{% endblock %}
+{% block nav_buscar %}active{% endblock %}
+{% block page_title %}Buscar canciones{% endblock %}
+
+{% block content %}
+<form method="get" id="form-busqueda" class="search-bar">
+  <input id="input-busqueda" type="text" name="q" value="{{ q }}" placeholder="Buscar...">
+  <select id="select-filtro" name="filtro">
+    <option value="nombre"  {% if filtro == "nombre"  %}selected{% endif %}>Por nombre</option>
+    <option value="genero"  {% if filtro == "genero"  %}selected{% endif %}>Por género</option>
+    <option value="artista" {% if filtro == "artista" %}selected{% endif %}>Por artista</option>
+    <option value="album"   {% if filtro == "album"   %}selected{% endif %}>Por álbum</option>
+  </select>
+  <button class="btn btn-primary" type="submit">Buscar</button>
+</form>
+
+{% if q %}
+  {% if canciones %}
+    <p style="color:#aaa; margin-bottom:1rem">
+      {{ canciones|length }} resultado(s) para "<strong style="color:#fff">{{ q }}</strong>"
+    </p>
+    <table id="tabla-canciones">
+      <thead>
+        <tr>
+          <th data-sort>Canción</th>
+          <th data-sort>Artista</th>
+          <th data-sort>Álbum</th>
+          <th data-sort>Duración</th>
+          <th data-sort>Reproducciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in canciones %}
+        <tr>
+          <td><strong style="color:#fff">{{ c.nombre }}</strong></td>
+          <td>{{ c.artista }}</td>
+          <td><a href="{% url 'lanzamiento_detail' lanzamiento_id=c.idLanzamiento %}" style="color:#3387c7">{{ c.album }}</a></td>
+          <td>{{ c.duracion }}</td>
+          <td>{{ c.reproducciones }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty">No se encontraron canciones para "{{ q }}".</div>
+  {% endif %}
+{% else %}
+  <div class="empty">Ingresa un término de búsqueda para encontrar canciones.</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'JS/music.js' %}"></script>
+<script>
+  initAutoSearch('input-busqueda', 'select-filtro', 'form-busqueda', 600);
+  initSortableTable('tabla-canciones');
+</script>
+{% endblock %}

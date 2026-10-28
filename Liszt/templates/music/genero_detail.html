@@ -1,0 +1,38 @@
+{% extends 'music/base_music.html' %}
+
+{% block title %}{{ genero.nombre }} - Liszt{% endblock %}
+{% block nav_generos %}active{% endblock %}
+{% block page_title %}{{ genero.nombre }}{% endblock %}
+
+{% block content %}
+<a class="back-link" href="{% url 'generos' %}">← Volver a géneros</a>
+
+<p style="color:#555; margin-bottom:1.5rem">{{ canciones|length }} canción(es)</p>
+
+{% if canciones %}
+  <table>
+    <thead>
+      <tr>
+        <th>Canción</th>
+        <th>Artista</th>
+        <th>Álbum</th>
+        <th>Duración</th>
+        <th>Reproducciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in canciones %}
+      <tr>
+        <td><strong style="color:#fff">{{ c.nombre }}</strong></td>
+        <td>{{ c.artista }}</td>
+        <td><a href="{% url 'lanzamiento_detail' lanzamiento_id=c.idLanzamiento %}" style="color:#3387c7">{{ c.album }}</a></td>
+        <td>{{ c.duracion }}</td>
+        <td>{{ c.reproducciones }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="empty">No hay canciones en este género.</div>
+{% endif %}
+{% endblock %}
